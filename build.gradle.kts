@@ -8,6 +8,12 @@ plugins {
 group = "net.dankito.sitemap"
 version = "1.0.0-SNAPSHOT"
 
+ext["customArtifactId"] = "sitemap-parser"
+
+ext["sourceCodeRepositoryBaseUrl"] = "github.com/dankito/SitemapParser"
+
+ext["projectDescription"] = "Discovers and parses sitemap (index) files."
+
 
 kotlin {
     jvmToolchain(21)
@@ -56,4 +62,9 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+
+if (file("./gradle/scripts/publish-dankito.gradle.kts").exists()) {
+    apply(from = "./gradle/scripts/publish-dankito.gradle.kts")
 }
