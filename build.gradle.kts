@@ -16,7 +16,7 @@ ext["projectDescription"] = "Discovers and parses sitemap (index) files."
 
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(11)
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
