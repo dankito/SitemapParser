@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
 plugins {
     kotlin("jvm") version "2.0.21"
 }
@@ -9,6 +11,21 @@ version = "1.0.0-SNAPSHOT"
 
 kotlin {
     jvmToolchain(21)
+
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        javaParameters = true
+
+//        val isRunningInIntelliJ = System.getProperty("idea.active") == "true"
+        val isDebuggerPortSet = System.getProperty("debug")?.toIntOrNull() != null
+        val isDebuggerAttached = isDebuggerPortSet
+                || System.getProperty("idea.debugger.dispatch.addr") != null // does not seem to work anymore
+
+        // avoid "variable has been optimised out" in debugging mode
+        if (isDebuggerAttached) {
+            freeCompilerArgs.add("-Xdebug")
+        }
+    }
 }
 
 
