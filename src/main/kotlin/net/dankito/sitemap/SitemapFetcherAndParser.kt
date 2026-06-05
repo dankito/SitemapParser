@@ -6,7 +6,7 @@ import net.dankito.web.client.WebClient
 import net.dankito.web.client.get
 
 class SitemapFetcherAndParser(
-    protected val xmlParser: SitemapXmlParser = DefaultInstances.sitemapXmlParser,
+    protected val xmlParser: SitemapXmlParser = DefaultInstances.xmlParser,
     protected val webClient: WebClient = DefaultInstances.webClient,
 ) {
 

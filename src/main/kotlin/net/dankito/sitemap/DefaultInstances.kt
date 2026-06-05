@@ -5,10 +5,10 @@ import net.dankito.web.client.WebClient
 
 object DefaultInstances {
 
-    var sitemapXmlParser: SitemapXmlParser = SitemapXmlParser()
+    var xmlParser: SitemapXmlParser = JacksonSitemapXmlParser()
 
     var webClient: WebClient = JavaHttpClientWebClient()
 
-//    var sitemapParser: SitemapParser = SitemapParser(webClient = webClient)
+    var sitemapParser: SitemapFetcherAndParser = SitemapFetcherAndParser(xmlParser, webClient)
 
 }

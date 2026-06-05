@@ -7,14 +7,14 @@ import assertk.assertions.isTrue
 import net.dankito.sitemap.model.SitemapResult
 import kotlin.test.Test
 
-class SitemapXmlParserTest {
+class JacksonSitemapXmlParserTest {
 
-    private val underTest = SitemapXmlParser()
+    private val underTest = JacksonSitemapXmlParser()
 
 
     @Test
     fun parse() {
-        val sitemapXml = SitemapXmlParserTest::class.java.classLoader.getResource("testFiles/sitemaps/heise_sitemap.xml")!!.readText()
+        val sitemapXml = JacksonSitemapXmlParserTest::class.java.classLoader.getResource("testFiles/sitemaps/heise_sitemap.xml")!!.readText()
 
         val result = underTest.parse(sitemapXml, "https://www.heise.de/sitemap.xml")
 
@@ -25,7 +25,7 @@ class SitemapXmlParserTest {
 
     @Test
     fun parseImageElements() {
-        val sitemapXml = SitemapXmlParserTest::class.java.classLoader.getResource("testFiles/sitemaps/heise_sitemap-stories-latest.xml")!!.readText()
+        val sitemapXml = JacksonSitemapXmlParserTest::class.java.classLoader.getResource("testFiles/sitemaps/heise_sitemap-stories-latest.xml")!!.readText()
 
         val result = underTest.parse(sitemapXml, "https://www.heise.de/bestenlisten/sitemap-stories-latest.xml.gz")
 
