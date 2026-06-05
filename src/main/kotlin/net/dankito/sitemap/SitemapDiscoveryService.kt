@@ -1,5 +1,11 @@
 package net.dankito.sitemap
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import net.codinux.log.logger
 import net.dankito.sitemap.model.SitemapResult
 import net.dankito.web.client.RequestParameters
@@ -35,10 +41,11 @@ open class SitemapDiscoveryService(
      * @param url Any URL on the target site (e.g. "https://example.com/news/article")
      * @param maxIndexDepth How deep to recurse into sitemap index files (default: 2)
      */
-    open suspend fun discover(url: String, maxIndexDepth: Int = 2): List<SitemapResult> {
+    open suspend fun discover(url: String, maxIndexDepth: Int = 2, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): List<SitemapResult> {
         val origin = URI.create(url).let { URI(it.scheme, it.authority, null, null, null) }.toString()
         val visited = mutableSetOf<String>()
         val results = mutableListOf<SitemapResult>()
+        val semaphore = Semaphore(5) // to stay below HTTP/2 limit of max 5 concurrent streams
 
         suspend fun fetchAndParse(sitemapUrl: String, depth: Int) {
             if (sitemapUrl in visited || depth > maxIndexDepth) {
@@ -53,7 +60,9 @@ open class SitemapDiscoveryService(
             }
 
             if (result is SitemapResult.Index && depth < maxIndexDepth) {
-                result.referencedUrls.forEach { fetchAndParse(it, depth + 1) }
+                result.referencedUrls.map {
+                    scope.async { semaphore.withPermit { fetchAndParse(it, depth + 1) } }
+                }.awaitAll()
             }
         }
 

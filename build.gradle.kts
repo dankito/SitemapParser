@@ -42,8 +42,11 @@ repositories {
 
 val jacksonVersion: String = "2.21.2"
 val webClientVersion: String = "1.8.0"
+val coroutinesVersion: String = "1.9.0"
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
@@ -55,7 +58,7 @@ dependencies {
 
 
     testImplementation(kotlin("test"))
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
     testImplementation("ch.qos.logback:logback-classic:1.5.32")
 }
