@@ -18,6 +18,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
+    testImplementation("ch.qos.logback:logback-classic:1.5.32")
 }
 
 
