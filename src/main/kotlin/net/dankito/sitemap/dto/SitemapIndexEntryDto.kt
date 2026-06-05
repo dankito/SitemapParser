@@ -1,8 +1,8 @@
-package net.dankito.sitemap.model
+package net.dankito.sitemap.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class SitemapIndexEntry(
+data class SitemapIndexEntryDto(
     @field:JsonProperty("loc")
     val location: String,
     @field:JsonProperty("lastmod")
