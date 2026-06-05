@@ -10,6 +10,8 @@ data class UrlEntry(
     @field:JsonProperty("changefreq")
     val changeFrequency: String? = null,
     val priority: Double? = null,
+    val image: SitemapImage? = null,
+    val video: SitemapVideo? = null,
 ) {
     override fun toString() = location
 }
