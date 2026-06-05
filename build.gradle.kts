@@ -31,6 +31,7 @@ dependencies {
 
 
     testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("com.willowtreeapps.assertk:assertk:0.28.1")
     testImplementation("ch.qos.logback:logback-classic:1.5.32")
 }
