@@ -70,11 +70,12 @@ open class SitemapDiscoveryService(
         val robotsUrl = "$origin/robots.txt"
         log.info { "Fetching robots.txt: $robotsUrl" }
         val robotsResponse = webClient.get<String>(robotsUrl)
-        if (robotsResponse.successfulAndBodySet == false) {
+        val robotsSitemaps = if (robotsResponse.successfulAndBodySet == false) {
             log.warn(robotsResponse.error) { "Could not fetch robots.txt" }
-            return emptyList()
+            emptyList()
+        } else {
+            robotsParser.extractSitemapUrls(robotsResponse.body!!)
         }
-        val robotsSitemaps = robotsParser.extractSitemapUrls(robotsResponse.body!!)
 
         log.info { "Found ${robotsSitemaps.size} sitemap(s) in robots.txt" }
         robotsSitemaps.forEach { fetchAndParse(it, 0) }
