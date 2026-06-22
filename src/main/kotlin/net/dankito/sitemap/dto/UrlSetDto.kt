@@ -7,7 +7,7 @@ import net.dankito.sitemap.model.UrlEntry
 
 @JacksonXmlRootElement(localName = "urlset")
 data class UrlSetDto(
-    @JacksonXmlElementWrapper(useWrapping = false)
-    @JacksonXmlProperty(localName = "url")
+    @field:JacksonXmlElementWrapper(useWrapping = false)
+    @field:JacksonXmlProperty(localName = "url")
     val urls: List<UrlEntry> = emptyList(),
 )
