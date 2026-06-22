@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import net.dankito.sitemap.dto.SitemapIndexDto
 import net.dankito.sitemap.dto.UrlSetDto
+import net.dankito.sitemap.model.SitemapRef
 import net.dankito.sitemap.model.SitemapResult
 
 open class JacksonSitemapXmlParser(
@@ -18,7 +19,7 @@ open class JacksonSitemapXmlParser(
 
     override fun parseSitemapIndex(xml: String, sourceUrl: String): SitemapResult {
         val index = xmlMapper.readValue(xml, SitemapIndexDto::class.java)
-        return SitemapResult.Index(sourceUrl, index.sitemaps.map { it.location })
+        return SitemapResult.Index(sourceUrl, index.sitemaps.map { SitemapRef(it.location, it.lastModified?.toInstant()) })
     }
 
     override fun parseUrlSet(xml: String, sourceUrl: String): SitemapResult {

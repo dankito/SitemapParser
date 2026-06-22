@@ -61,7 +61,7 @@ open class SitemapDiscoveryService(
 
             if (result is SitemapResult.Index && depth < maxIndexDepth) {
                 result.referencedUrls.map {
-                    scope.async { semaphore.withPermit { fetchAndParse(it, depth + 1) } }
+                    scope.async { semaphore.withPermit { fetchAndParse(it.url, depth + 1) } }
                 }.awaitAll()
             }
         }
