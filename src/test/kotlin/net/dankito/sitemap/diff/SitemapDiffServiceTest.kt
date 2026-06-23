@@ -19,35 +19,35 @@ class SitemapDiffServiceTest {
     fun `skip when both lastmod set and equal`() {
         val ts = instant(1000)
         val prev = snapshot(fileSnapshot("https://example.com/sitemap.xml", lastModified = ts))
-        val ref = SitemapRef(url = "https://example.com/sitemap.xml", lastModified = ts)
+        val ref = SitemapIndexEntry(url = "https://example.com/sitemap.xml", lastModified = ts)
         assertTrue(underTest.shouldSkipFetch(ref, prev))
     }
 
     @Test
     fun `fetch when lastmod differs`() {
         val prev = snapshot(fileSnapshot("https://example.com/sitemap.xml", lastModified = instant(1000)))
-        val ref = SitemapRef(url = "https://example.com/sitemap.xml", lastModified = instant(2000))
+        val ref = SitemapIndexEntry(url = "https://example.com/sitemap.xml", lastModified = instant(2000))
         assertFalse(underTest.shouldSkipFetch(ref, prev))
     }
 
     @Test
     fun `fetch when ref lastmod is null`() {
         val prev = snapshot(fileSnapshot("https://example.com/sitemap.xml", lastModified = instant(1000)))
-        val ref = SitemapRef(url = "https://example.com/sitemap.xml", lastModified = null)
+        val ref = SitemapIndexEntry(url = "https://example.com/sitemap.xml", lastModified = null)
         assertFalse(underTest.shouldSkipFetch(ref, prev))
     }
 
     @Test
     fun `fetch when previous lastmod is null`() {
         val prev = snapshot(fileSnapshot("https://example.com/sitemap.xml", lastModified = null))
-        val ref = SitemapRef(url = "https://example.com/sitemap.xml", lastModified = instant(1000))
+        val ref = SitemapIndexEntry(url = "https://example.com/sitemap.xml", lastModified = instant(1000))
         assertFalse(underTest.shouldSkipFetch(ref, prev))
     }
 
     @Test
     fun `fetch when file not in snapshot`() {
         val prev = snapshot()
-        val ref = SitemapRef(url = "https://example.com/sitemap.xml", lastModified = instant(1000))
+        val ref = SitemapIndexEntry(url = "https://example.com/sitemap.xml", lastModified = instant(1000))
         assertFalse(underTest.shouldSkipFetch(ref, prev))
     }
 
@@ -146,7 +146,7 @@ class SitemapDiffServiceTest {
         val current = listOf(
             SitemapParseResult.Index(
                 sourceUrl = "https://example.com/sitemap-index.xml",
-                referencedUrls = listOf(SitemapRef("https://example.com/sitemap.xml")),
+                referencedUrls = listOf(SitemapIndexEntry("https://example.com/sitemap.xml")),
             ),
             SitemapParseResult.Failure(
                 sourceUrl = "https://example.com/broken.xml",
@@ -175,7 +175,7 @@ class SitemapDiffServiceTest {
         OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneOffset.UTC)
 
     private fun urlEntry(loc: String, lastModified: OffsetDateTime? = null) =
-        UrlEntry(location = loc, lastModified = lastModified)
+        SitemapUrl(location = loc, lastModified = lastModified)
 
     private fun snapshot(vararg files: SitemapFileSnapshot) = SitemapSnapshot(
         capturedAt = instant(0),
