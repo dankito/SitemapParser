@@ -2,19 +2,19 @@ package net.dankito.sitemap.diff
 
 import net.dankito.sitemap.diff.model.*
 import net.dankito.sitemap.model.SitemapRef
-import net.dankito.sitemap.model.SitemapResult
+import net.dankito.sitemap.model.SitemapParseResult
 import net.dankito.sitemap.model.UrlEntry
 
 class SitemapDiffService {
 
-    fun diff(previous: SitemapSnapshot, current: List<SitemapResult>): SitemapDiff {
+    fun diff(previous: SitemapSnapshot, current: List<SitemapParseResult>): SitemapDiff {
         val newSitemapFiles = mutableListOf<String>()
         val newUrls = mutableListOf<UrlEntry>()
         val updatedUrls = mutableListOf<UrlEntry>()
 
         for (result in current) {
             when (result) {
-                is SitemapResult.UrlSet -> {
+                is SitemapParseResult.UrlSet -> {
                     val previousFile = previous.sitemapFiles[result.sourceUrl]
                     if (previousFile == null) {
                         newSitemapFiles.add(result.sourceUrl)
@@ -29,8 +29,8 @@ class SitemapDiffService {
                         }
                     }
                 }
-                is SitemapResult.Index -> Unit
-                is SitemapResult.Failure -> Unit
+                is SitemapParseResult.Index -> Unit
+                is SitemapParseResult.Failure -> Unit
             }
         }
 

@@ -1,7 +1,7 @@
 package net.dankito.sitemap
 
 import net.codinux.log.logger
-import net.dankito.sitemap.model.SitemapResult
+import net.dankito.sitemap.model.SitemapParseResult
 import net.dankito.web.client.WebClient
 import net.dankito.web.client.WebClientResult
 import net.dankito.web.client.get
@@ -16,7 +16,7 @@ class SitemapFetcherAndParser(
     protected val log by logger()
 
 
-    suspend fun fetchAndParse(sitemapUrl: String): SitemapResult {
+    suspend fun fetchAndParse(sitemapUrl: String): SitemapParseResult {
         log.info { "Fetching sitemap: $sitemapUrl" }
 
         val response = webClient.get<InputStream>(sitemapUrl)
@@ -27,7 +27,7 @@ class SitemapFetcherAndParser(
             xmlParser.parse(inputStream.bufferedReader().readText(), sitemapUrl)
         } else {
             log.warn(response.error) { "Failed to fetch Sitemap from $sitemapUrl" }
-            SitemapResult.Failure(sitemapUrl, response.error?.message ?: "unknown error")
+            SitemapParseResult.Failure(sitemapUrl, response.error?.message ?: "unknown error")
         }
     }
 

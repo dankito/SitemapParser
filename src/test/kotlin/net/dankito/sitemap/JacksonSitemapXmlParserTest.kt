@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
-import net.dankito.sitemap.model.SitemapResult
+import net.dankito.sitemap.model.SitemapParseResult
 import kotlin.test.Test
 
 class JacksonSitemapXmlParserTest {
@@ -18,8 +18,8 @@ class JacksonSitemapXmlParserTest {
 
         val result = underTest.parse(sitemapXml, "https://www.heise.de/sitemap.xml")
 
-        assertThat(result).isInstanceOf<SitemapResult.UrlSet>()
-        val urls = (result as SitemapResult.UrlSet).urls
+        assertThat(result).isInstanceOf<SitemapParseResult.UrlSet>()
+        val urls = (result as SitemapParseResult.UrlSet).urls
         assertThat(urls).hasSize(10_000)
     }
 
@@ -29,8 +29,8 @@ class JacksonSitemapXmlParserTest {
 
         val result = underTest.parse(sitemapXml, "https://www.heise.de/bestenlisten/sitemap-stories-latest.xml.gz")
 
-        assertThat(result).isInstanceOf<SitemapResult.UrlSet>()
-        val urls = (result as SitemapResult.UrlSet).urls
+        assertThat(result).isInstanceOf<SitemapParseResult.UrlSet>()
+        val urls = (result as SitemapParseResult.UrlSet).urls
         assertThat(urls).hasSize(2)
         assertThat(urls.all { it.image != null }).isTrue()
     }

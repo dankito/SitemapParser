@@ -57,7 +57,7 @@ class SitemapDiffServiceTest {
     fun `new sitemap file produces all URLs as new`() {
         val prev = snapshot()
         val current = listOf(
-            SitemapResult.UrlSet(
+            SitemapParseResult.UrlSet(
                 sourceUrl = "https://example.com/sitemap.xml",
                 urls = listOf(urlEntry("https://example.com/a"), urlEntry("https://example.com/b")),
             )
@@ -75,7 +75,7 @@ class SitemapDiffServiceTest {
             fileSnapshot("https://example.com/sitemap.xml", urls = arrayOf(urlSnapshot("https://example.com/a", ts)))
         )
         val current = listOf(
-            SitemapResult.UrlSet(
+            SitemapParseResult.UrlSet(
                 sourceUrl = "https://example.com/sitemap.xml",
                 urls = listOf(urlEntry("https://example.com/a", ts), urlEntry("https://example.com/b")),
             )
@@ -95,7 +95,7 @@ class SitemapDiffServiceTest {
             )
         )
         val current = listOf(
-            SitemapResult.UrlSet(
+            SitemapParseResult.UrlSet(
                 sourceUrl = "https://example.com/sitemap.xml",
                 urls = listOf(urlEntry("https://example.com/a", odt(2000))),
             )
@@ -112,7 +112,7 @@ class SitemapDiffServiceTest {
             fileSnapshot("https://example.com/sitemap.xml", urls = arrayOf(urlSnapshot("https://example.com/a", ts)))
         )
         val current = listOf(
-            SitemapResult.UrlSet(
+            SitemapParseResult.UrlSet(
                 sourceUrl = "https://example.com/sitemap.xml",
                 urls = listOf(urlEntry("https://example.com/a", ts)),
             )
@@ -128,7 +128,7 @@ class SitemapDiffServiceTest {
             fileSnapshot("https://example.com/sitemap.xml", urls = arrayOf(urlSnapshot("https://example.com/a", null)))
         )
         val current = listOf(
-            SitemapResult.UrlSet(
+            SitemapParseResult.UrlSet(
                 sourceUrl = "https://example.com/sitemap.xml",
                 urls = listOf(urlEntry("https://example.com/a", null)),
             )
@@ -144,11 +144,11 @@ class SitemapDiffServiceTest {
     fun `Index and Failure results are ignored`() {
         val prev = snapshot()
         val current = listOf(
-            SitemapResult.Index(
+            SitemapParseResult.Index(
                 sourceUrl = "https://example.com/sitemap-index.xml",
                 referencedUrls = listOf(SitemapRef("https://example.com/sitemap.xml")),
             ),
-            SitemapResult.Failure(
+            SitemapParseResult.Failure(
                 sourceUrl = "https://example.com/broken.xml",
                 reason = "404",
             ),

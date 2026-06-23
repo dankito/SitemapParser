@@ -7,7 +7,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import net.codinux.log.logger
-import net.dankito.sitemap.model.SitemapResult
+import net.dankito.sitemap.model.SitemapParseResult
 import net.dankito.web.client.RequestParameters
 import net.dankito.web.client.WebClient
 import net.dankito.web.client.get
@@ -41,10 +41,10 @@ open class SitemapDiscoveryService(
      * @param url Any URL on the target site (e.g. "https://example.com/news/article")
      * @param maxIndexDepth How deep to recurse into sitemap index files (default: 2)
      */
-    open suspend fun discover(url: String, maxIndexDepth: Int = 2, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): List<SitemapResult> {
+    open suspend fun discover(url: String, maxIndexDepth: Int = 2, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): List<SitemapParseResult> {
         val origin = URI.create(url).let { URI(it.scheme, it.authority, null, null, null) }.toString()
         val visited = mutableSetOf<String>()
-        val results = mutableListOf<SitemapResult>()
+        val results = mutableListOf<SitemapParseResult>()
         val semaphore = Semaphore(5) // to stay below HTTP/2 limit of max 5 concurrent streams
 
         suspend fun fetchAndParse(sitemapUrl: String, depth: Int) {
@@ -55,11 +55,11 @@ open class SitemapDiscoveryService(
 
             val result = fetchAndParse(sitemapUrl)
             results += result
-            if (result is SitemapResult.Failure) {
+            if (result is SitemapParseResult.Failure) {
                 return
             }
 
-            if (result is SitemapResult.Index && depth < maxIndexDepth) {
+            if (result is SitemapParseResult.Index && depth < maxIndexDepth) {
                 result.referencedUrls.map {
                     scope.async { semaphore.withPermit { fetchAndParse(it.url, depth + 1) } }
                 }.awaitAll()
@@ -92,7 +92,7 @@ open class SitemapDiscoveryService(
     }
 
 
-    open suspend fun fetchAndParse(sitemapUrl: String): SitemapResult =
+    open suspend fun fetchAndParse(sitemapUrl: String): SitemapParseResult =
         sitemapParser.fetchAndParse(sitemapUrl)
 
 }

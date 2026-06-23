@@ -9,7 +9,7 @@ import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import kotlinx.coroutines.test.runTest
-import net.dankito.sitemap.model.SitemapResult
+import net.dankito.sitemap.model.SitemapParseResult
 import kotlin.test.Test
 
 class SitemapDiscoveryServiceTest {
@@ -27,9 +27,9 @@ class SitemapDiscoveryServiceTest {
         // - one of these does not exist (https://www.heise.de/sitemapindex.xml).
         // - one, even if stated otherwise, is a sitemap index file which contains more than 200 sitemap files: https://www.heise.de/bestenlisten/sitemap-articles-index.xml.gz
         // - and sitemap.xml is not in robots.txt but discovered by standard paths. Without it result.size would be 213, so check if its greater
-        val failures = result.filterIsInstance<SitemapResult.Failure>()
-        val sitemapIndices = result.filterIsInstance<SitemapResult.Index>()
-        val urlSets = result.filterIsInstance<SitemapResult.UrlSet>()
+        val failures = result.filterIsInstance<SitemapParseResult.Failure>()
+        val sitemapIndices = result.filterIsInstance<SitemapParseResult.Index>()
+        val urlSets = result.filterIsInstance<SitemapParseResult.UrlSet>()
 
         assertThat(failures).hasSize(1)
         assertThat(failures.first().sourceUrl).isEqualTo("https://www.heise.de/sitemapindex.xml")
@@ -45,9 +45,9 @@ class SitemapDiscoveryServiceTest {
     fun fetchAndParseImageSitemap() = runTest {
         val result = underTest.fetchAndParse("https://www.faz.net/sitemap-wirtschaft-bilder-1.xml")
 
-        assertThat(result).isInstanceOf<SitemapResult.UrlSet>()
+        assertThat(result).isInstanceOf<SitemapParseResult.UrlSet>()
 
-        val urls = (result as SitemapResult.UrlSet).urls
+        val urls = (result as SitemapParseResult.UrlSet).urls
         assertThat(urls.size).isGreaterThanOrEqualTo(1_000)
 
         val images = urls.filter { it.image != null }
@@ -60,9 +60,9 @@ class SitemapDiscoveryServiceTest {
     fun fetchAndParseVideoSitemap() = runTest {
         val result = underTest.fetchAndParse("https://www.faz.net/sitemap-politik-video-1.xml")
 
-        assertThat(result).isInstanceOf<SitemapResult.UrlSet>()
+        assertThat(result).isInstanceOf<SitemapParseResult.UrlSet>()
 
-        val urls = (result as SitemapResult.UrlSet).urls
+        val urls = (result as SitemapParseResult.UrlSet).urls
         assertThat(urls.size).isGreaterThanOrEqualTo(1_500)
 
         val videos = urls.filter { it.video != null }
