@@ -38,17 +38,21 @@ open class SitemapDiscoveryService(
      * Discovers and parses all sitemaps reachable from the given URL's origin.
      * Checks robots.txt first, then falls back to default paths.
      *
+     * Google doesn't support nested index files, so Sitemap Indices may not contain other Sitemap Indices -> `resolveIndexEntries` =
+     * - `false` = only top level indices and sitemaps
+     * - `true` = also fetch all sitemaps referenced by sitemap indices
+     *
      * @param url Any URL on the target site (e.g. "https://example.com/news/article")
-     * @param maxIndexDepth How deep to recurse into sitemap index files (default: 2)
+     * @param resolveIndexEntries If sitemap urls in Sitemap Index files should also be resolved (default: true)
      */
-    open suspend fun discover(url: String, maxIndexDepth: Int = 2, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): List<SitemapParseResult> {
+    open suspend fun discover(url: String, resolveIndexEntries: Boolean = true, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): List<SitemapParseResult> {
         val origin = URI.create(url).let { URI(it.scheme, it.authority, null, null, null) }.toString()
         val visited = mutableSetOf<String>()
         val results = mutableListOf<SitemapParseResult>()
         val semaphore = Semaphore(5) // to stay below HTTP/2 limit of max 5 concurrent streams
 
         suspend fun fetchAndParse(sitemapUrl: String, depth: Int) {
-            if (sitemapUrl in visited || depth > maxIndexDepth) {
+            if (sitemapUrl in visited || (resolveIndexEntries == false && depth > 0)) {
                 return
             }
             visited += sitemapUrl
@@ -59,7 +63,7 @@ open class SitemapDiscoveryService(
                 return
             }
 
-            if (result is SitemapParseResult.Index && depth < maxIndexDepth) {
+            if (result is SitemapParseResult.Index) {
                 result.referencedUrls.map {
                     scope.async { semaphore.withPermit { fetchAndParse(it.url, depth + 1) } }
                 }.awaitAll()
