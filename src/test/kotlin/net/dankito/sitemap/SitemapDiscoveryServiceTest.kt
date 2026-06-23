@@ -2,8 +2,11 @@ package net.dankito.sitemap
 
 import assertk.assertThat
 import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import kotlinx.coroutines.test.runTest
 import net.dankito.sitemap.model.SitemapResult
@@ -36,6 +39,36 @@ class SitemapDiscoveryServiceTest {
 
         val discoveredSitemap = urlSets.firstOrNull { it.sourceUrl == "https://www.heise.de/sitemap.xml" }
         assertThat(discoveredSitemap).isNotNull()
+    }
+
+    @Test
+    fun fetchAndParseImageSitemap() = runTest {
+        val result = underTest.fetchAndParse("https://www.faz.net/sitemap-wirtschaft-bilder-1.xml")
+
+        assertThat(result).isInstanceOf<SitemapResult.UrlSet>()
+
+        val urls = (result as SitemapResult.UrlSet).urls
+        assertThat(urls.size).isGreaterThanOrEqualTo(1_000)
+
+        val images = urls.filter { it.image != null }
+        val noImages = urls.filter { it.image == null }
+        assertThat(noImages).isEmpty()
+        assertThat(images).hasSize(urls.size)
+    }
+
+    @Test
+    fun fetchAndParseVideoSitemap() = runTest {
+        val result = underTest.fetchAndParse("https://www.faz.net/sitemap-politik-video-1.xml")
+
+        assertThat(result).isInstanceOf<SitemapResult.UrlSet>()
+
+        val urls = (result as SitemapResult.UrlSet).urls
+        assertThat(urls.size).isGreaterThanOrEqualTo(1_500)
+
+        val videos = urls.filter { it.video != null }
+        val noVideo = urls.filter { it.video == null }
+        assertThat(noVideo).isEmpty()
+        assertThat(videos).hasSize(urls.size)
     }
 
 }
