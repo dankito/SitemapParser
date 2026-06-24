@@ -63,7 +63,7 @@ open class SitemapDiscoveryService(
                 return
             }
 
-            if (result is SitemapParseResult.Index) {
+            if (result is SitemapParseResult.Index && resolveIndexEntries) {
                 result.referencedUrls.map {
                     scope.async { semaphore.withPermit { fetchAndParse(it.url, depth + 1) } }
                 }.awaitAll()
