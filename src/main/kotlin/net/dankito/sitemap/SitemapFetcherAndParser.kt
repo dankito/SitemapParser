@@ -22,9 +22,17 @@ class SitemapFetcherAndParser(
         val response = webClient.get<InputStream>(sitemapUrl)
 
         return if (response.successfulAndBodySet) {
+            val contentType = response.responseDetails?.contentType?.substringBefore(';')
             val inputStream = if (isGzip(response)) GZIPInputStream(response.body!!)
-                              else response.body!!
-            xmlParser.parse(inputStream.bufferedReader().readText(), sitemapUrl)
+                            else response.body!!
+            val responseBody = inputStream.bufferedReader().readText()
+
+            if (contentType == "text/xml" || contentType == "application/xml") {
+                xmlParser.parse(responseBody, sitemapUrl)
+            } else {
+                log.warn { "Expected to retrieve 'text/xml' as content type for sitemap but got $contentType" }
+                SitemapParseResult.Failure(sitemapUrl, "Unsupported content type: $contentType. Response body: $responseBody")
+            }
         } else {
             log.warn(response.error) { "Failed to fetch Sitemap from $sitemapUrl" }
             SitemapParseResult.Failure(sitemapUrl, response.error?.message ?: "unknown error")
