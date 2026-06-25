@@ -70,7 +70,7 @@ class SitemapDiffServiceTest {
 
     @Test
     fun `new URL in known file is detected`() {
-        val ts = odt(1000)
+        val ts = instant(1000)
         val prev = snapshot(
             fileSnapshot("https://example.com/sitemap.xml", urls = arrayOf(urlSnapshot("https://example.com/a", ts)))
         )
@@ -91,13 +91,13 @@ class SitemapDiffServiceTest {
         val prev = snapshot(
             fileSnapshot(
                 "https://example.com/sitemap.xml",
-                urls = arrayOf(urlSnapshot("https://example.com/a", odt(1000)))
+                urls = arrayOf(urlSnapshot("https://example.com/a", instant(1000)))
             )
         )
         val current = listOf(
             SitemapParseResult.UrlSet(
                 sourceUrl = "https://example.com/sitemap.xml",
-                urls = listOf(urlEntry("https://example.com/a", odt(2000))),
+                urls = listOf(urlEntry("https://example.com/a", instant(2000))),
             )
         )
         val diff = underTest.diff(prev, current)
@@ -107,7 +107,7 @@ class SitemapDiffServiceTest {
 
     @Test
     fun `same lastmod means URL is not updated`() {
-        val ts = odt(1000)
+        val ts = instant(1000)
         val prev = snapshot(
             fileSnapshot("https://example.com/sitemap.xml", urls = arrayOf(urlSnapshot("https://example.com/a", ts)))
         )
@@ -171,10 +171,8 @@ class SitemapDiffServiceTest {
 
 
     private fun instant(epochSecond: Long) = Instant.ofEpochSecond(epochSecond)
-    private fun odt(epochSecond: Long) =
-        OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneOffset.UTC)
 
-    private fun urlEntry(loc: String, lastModified: OffsetDateTime? = null) =
+    private fun urlEntry(loc: String, lastModified: Instant? = null) =
         SitemapUrl(location = loc, lastModified = lastModified)
 
     private fun snapshot(vararg files: SitemapFileSnapshot) = SitemapSnapshot(
@@ -192,7 +190,7 @@ class SitemapDiffServiceTest {
         urls = urls.associateBy { it.location },
     )
 
-    private fun urlSnapshot(location: String, lastModified: OffsetDateTime? = null) =
+    private fun urlSnapshot(location: String, lastModified: Instant? = null) =
         UrlSnapshot(location = location, lastModified = lastModified)
 
 }

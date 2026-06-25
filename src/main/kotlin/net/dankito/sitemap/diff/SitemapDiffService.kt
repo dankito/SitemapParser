@@ -41,7 +41,7 @@ class SitemapDiffService {
         val previousMod = previous.lastModified
         val currentMod = current.lastModified
         if (previousMod != null && currentMod != null) {
-            return currentMod.toInstant() > previousMod.toInstant()
+            return currentMod > previousMod
         }
         return true // lastmod nicht zuverlässig → immer als geändert betrachten
     }
