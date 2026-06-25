@@ -28,7 +28,7 @@ class SitemapFetcherAndParser(
                             else response.body!!
             val responseBody = inputStream.bufferedReader().readText()
 
-            if (contentType == "text/xml" || contentType == "application/xml" || inputStream is GZIPInputStream) {
+            if (isXml(contentType, responseBody) || inputStream is GZIPInputStream) {
                 xmlParser.parse(responseBody, sitemapUrl)
             } else {
                 log.warn { "Expected to retrieve 'text/xml' as content type for sitemap but got $contentType" }
@@ -39,6 +39,13 @@ class SitemapFetcherAndParser(
             SitemapParseResult.Failure(sitemapUrl, response.error?.message ?: "unknown error")
         }
     }
+
+    private fun isXml(contentType: String?, responseBody: String): Boolean =
+        contentType == "text/xml"
+                || contentType == "application/xml"
+                || responseBody.startsWith("<?xml ")
+                || responseBody.startsWith("<sitemapindex ")
+                || responseBody.startsWith("<urlset ")
 
     private fun isGzip(response: WebClientResult<InputStream>): Boolean {
         // TODO: a more robust check would be reading the first few bytes of the response body and checking for gzip magic number:
