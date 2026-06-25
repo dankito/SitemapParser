@@ -19,6 +19,7 @@ class SitemapFetcherAndParser(
     suspend fun fetchAndParse(sitemapUrl: String): SitemapParseResult {
         log.info { "Fetching sitemap: $sitemapUrl" }
 
+        // TODO: does not work with KtorWebClient as it does not support InputStream, there we would need to use ByteReadChannel
         val response = webClient.get<InputStream>(sitemapUrl)
 
         return if (response.successfulAndBodySet) {
@@ -27,7 +28,7 @@ class SitemapFetcherAndParser(
                             else response.body!!
             val responseBody = inputStream.bufferedReader().readText()
 
-            if (contentType == "text/xml" || contentType == "application/xml") {
+            if (contentType == "text/xml" || contentType == "application/xml" || inputStream is GZIPInputStream) {
                 xmlParser.parse(responseBody, sitemapUrl)
             } else {
                 log.warn { "Expected to retrieve 'text/xml' as content type for sitemap but got $contentType" }
