@@ -8,7 +8,7 @@ import net.dankito.web.client.get
 import java.io.InputStream
 import java.util.zip.GZIPInputStream
 
-class SitemapFetcherAndParser(
+open class SitemapFetcherAndParser(
     protected val xmlParser: SitemapXmlParser = DefaultInstances.xmlParser,
     protected val webClient: WebClient = DefaultInstances.webClient,
 ) {
@@ -16,7 +16,7 @@ class SitemapFetcherAndParser(
     protected val log by logger()
 
 
-    suspend fun fetchAndParse(sitemapUrl: String): SitemapParseResult {
+    open suspend fun fetchAndParse(sitemapUrl: String, tryToFindNextSitemapPages: Boolean = true): SitemapParseResult {
         log.info { "Fetching sitemap: $sitemapUrl" }
 
         // TODO: does not work with KtorWebClient as it does not support InputStream, there we would need to use ByteReadChannel
@@ -40,14 +40,14 @@ class SitemapFetcherAndParser(
         }
     }
 
-    private fun isXml(contentType: String?, responseBody: String): Boolean =
+    protected open fun isXml(contentType: String?, responseBody: String): Boolean =
         contentType == "text/xml"
                 || contentType == "application/xml"
                 || responseBody.startsWith("<?xml ")
                 || responseBody.startsWith("<sitemapindex ")
                 || responseBody.startsWith("<urlset ")
 
-    private fun isGzip(response: WebClientResult<InputStream>): Boolean {
+    protected open fun isGzip(response: WebClientResult<InputStream>): Boolean {
         // TODO: a more robust check would be reading the first few bytes of the response body and checking for gzip magic number:
         //   bytes.size >= 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()
 
