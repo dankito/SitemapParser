@@ -71,4 +71,16 @@ class SitemapDiscoveryServiceTest {
         assertThat(videos).hasSize(urls.size)
     }
 
+
+    @Test
+    fun fetchNextSitemapPages() = runTest(timeout = 20.minutes) {
+        val result = underTest.fetchAndParse("https://www.heise.de/sitemap.xml", true)
+
+        assertThat(result).isInstanceOf<SitemapParseResult.UrlSet>()
+
+        val urls = (result as SitemapParseResult.UrlSet).urls
+        // sitemap.xml only returns 10.000 urls, so it has to discover next pages to have more than 10.000 urls
+        assertThat(urls.size).isGreaterThan(130_000)
+    }
+
 }

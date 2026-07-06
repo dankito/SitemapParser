@@ -2,6 +2,7 @@ package net.dankito.sitemap
 
 import net.codinux.log.logger
 import net.dankito.sitemap.model.SitemapParseResult
+import net.dankito.sitemap.model.SitemapUrl
 import net.dankito.web.client.WebClient
 import net.dankito.web.client.WebClientResult
 import net.dankito.web.client.get
@@ -12,6 +13,12 @@ open class SitemapFetcherAndParser(
     protected val xmlParser: SitemapXmlParser = DefaultInstances.xmlParser,
     protected val webClient: WebClient = DefaultInstances.webClient,
 ) {
+
+    companion object {
+        val PageQueryParam = Regex("""\?page=(\d+)$""")
+        val PageInFilename = Regex("""(\d+)\.xml(\.gz)?$""")
+    }
+
 
     protected val log by logger()
 
@@ -29,7 +36,7 @@ open class SitemapFetcherAndParser(
             val responseBody = inputStream.bufferedReader().readText()
 
             if (isXml(contentType, responseBody) || inputStream is GZIPInputStream) {
-                xmlParser.parse(responseBody, sitemapUrl)
+                parseResponse(responseBody, sitemapUrl, tryToFindNextSitemapPages)
             } else {
                 log.warn { "Expected to retrieve 'text/xml' as content type for sitemap but got $contentType" }
                 SitemapParseResult.Failure(sitemapUrl, "Unsupported content type: $contentType. Response body: $responseBody")
@@ -38,6 +45,47 @@ open class SitemapFetcherAndParser(
             log.warn(response.error) { "Failed to fetch Sitemap from $sitemapUrl" }
             SitemapParseResult.Failure(sitemapUrl, response.error?.message ?: "unknown error")
         }
+    }
+
+
+    protected open suspend fun parseResponse(responseBody: String, sitemapUrl: String, tryToFindNextSitemapPages: Boolean = true): SitemapParseResult {
+        val result = xmlParser.parse(responseBody, sitemapUrl)
+
+        if (result is SitemapParseResult.UrlSet && tryToFindNextSitemapPages) {
+            val nextPagesUrls = getNextPages(sitemapUrl)
+            if (nextPagesUrls.isNotEmpty()) {
+                return SitemapParseResult.UrlSet(sitemapUrl, (result.urls + nextPagesUrls).toSet().toList())
+            }
+        }
+
+        return result
+    }
+
+    protected open suspend fun getNextPages(sitemapUrl: String): Set<SitemapUrl> {
+        val filename = sitemapUrl.substringAfterLast('/')
+        val urlWithoutFilename = sitemapUrl.substringBeforeLast('/')
+
+        val nextPageFilenames = if (PageQueryParam.containsMatchIn(filename)) {
+            val match = PageQueryParam.find(filename)!!
+            val page = match.groupValues.get(1).toInt()
+            listOf(filename.substringBeforeLast(page.toString()) + (page + 1))
+        } else if (PageInFilename.containsMatchIn(filename)) {
+            val match = PageInFilename.find(filename)!!
+            val page = match.groupValues.get(1).toInt()
+            listOf(filename.substringBeforeLast(page.toString()) + (page + 1) + filename.substringAfterLast(page.toString()))
+        } else if (filename.endsWith(".xml.gz")) {
+            listOf(filename.replace(".xml.gz", "1.xml.gz"), filename + "?page=1")
+        } else if (filename.endsWith(".xml")) {
+            listOf(filename.replace(".xml", "1.xml"), filename + "?page=1")
+        } else {
+            emptyList()
+        }
+
+        val nextPagesResults = nextPageFilenames.map {
+            fetchAndParse(urlWithoutFilename + "/" + it, true)
+        }
+
+        return nextPagesResults.filterIsInstance<SitemapParseResult.UrlSet>().flatMap { it.urls }.toSet()
     }
 
     protected open fun isXml(contentType: String?, responseBody: String): Boolean =

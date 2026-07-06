@@ -57,7 +57,7 @@ open class SitemapDiscoveryService(
             }
             visited += sitemapUrl
 
-            val result = fetchAndParse(sitemapUrl)
+            val result = fetchAndParse(sitemapUrl, false)
             results += result
             if (result is SitemapParseResult.Failure) {
                 return
@@ -96,7 +96,7 @@ open class SitemapDiscoveryService(
     }
 
 
-    open suspend fun fetchAndParse(sitemapUrl: String): SitemapParseResult =
-        sitemapParser.fetchAndParse(sitemapUrl)
+    open suspend fun fetchAndParse(sitemapUrl: String, tryToFindNextSitemapPages: Boolean = true): SitemapParseResult =
+        sitemapParser.fetchAndParse(sitemapUrl, tryToFindNextSitemapPages)
 
 }
