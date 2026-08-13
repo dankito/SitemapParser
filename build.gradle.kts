@@ -65,6 +65,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.withType<Test> {
+    jvmArgs("-Xmx8G")
+}
+
 
 if (file("./gradle/scripts/publish-dankito.gradle.kts").exists()) {
     apply(from = "./gradle/scripts/publish-dankito.gradle.kts")
