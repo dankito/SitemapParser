@@ -20,7 +20,7 @@ open class SitemapDiscoveryService(
 ) {
 
     companion object {
-        private val DEFAULT_PATHS = listOf(
+        private val StandardPaths = listOf(
             "/sitemap.xml",
             "/sitemap_index.xml",
             "/sitemapindex.xml",
@@ -45,7 +45,12 @@ open class SitemapDiscoveryService(
      * @param url Any URL on the target site (e.g. "https://example.com/news/article")
      * @param resolveIndexEntries If sitemap urls in Sitemap Index files should also be resolved (default: true)
      */
-    open suspend fun discover(url: String, resolveIndexEntries: Boolean = true, scope: CoroutineScope = CoroutineScope(Dispatchers.IO)): List<SitemapParseResult> {
+    open suspend fun discover(
+        url: String,
+        resolveIndexEntries: Boolean = true,
+        checkStandardPaths: Boolean = true,
+        scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    ): List<SitemapParseResult> {
         val origin = URI.create(url).let { URI(it.scheme, it.authority, null, null, null) }.toString()
         val visited = mutableSetOf<String>()
         val results = mutableListOf<SitemapParseResult>()
@@ -86,11 +91,13 @@ open class SitemapDiscoveryService(
 
 
         // Step 2: default paths (skipping already-visited)
-        DEFAULT_PATHS
-            .map { "$origin$it" }
-            .filter { it !in visited }
-            .filter { webClient.head(RequestParameters(it)).successful }
-            .forEach { fetchAndParse(it, 0) }
+        if (checkStandardPaths) {
+            StandardPaths
+                .map { "$origin$it" }
+                .filter { it !in visited }
+                .filter { webClient.head(RequestParameters(it)).successful }
+                .forEach { fetchAndParse(it, 0) }
+        }
 
         return results
     }
