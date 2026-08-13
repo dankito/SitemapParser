@@ -7,6 +7,7 @@ import net.dankito.web.client.WebClient
 import net.dankito.web.client.WebClientResult
 import net.dankito.web.client.get
 import java.io.InputStream
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.zip.GZIPInputStream
 
 open class SitemapFetcherAndParser(
@@ -23,7 +24,10 @@ open class SitemapFetcherAndParser(
     protected val log by logger()
 
 
-    open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true): SitemapParseResult {
+    open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true) =
+        fetchAndParse(sitemapUrl, discoverNextPages, ConcurrentSkipListSet())
+
+    protected open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true, visitedNextPagesUrls: MutableSet<String>): SitemapParseResult {
         log.info { "Fetching sitemap: $sitemapUrl" }
 
         // TODO: does not work with KtorWebClient as it does not support InputStream, there we would need to use ByteReadChannel
@@ -36,7 +40,7 @@ open class SitemapFetcherAndParser(
             val responseBody = inputStream.bufferedReader().readText()
 
             if (isXml(contentType, responseBody) || inputStream is GZIPInputStream) {
-                parseResponse(responseBody, sitemapUrl, discoverNextPages)
+                parseResponse(responseBody, sitemapUrl, discoverNextPages, visitedNextPagesUrls)
             } else {
                 log.warn { "Expected to retrieve 'text/xml' as content type for sitemap but got $contentType" }
                 SitemapParseResult.Failure(sitemapUrl, "Unsupported content type: $contentType. Response body: $responseBody")
@@ -48,11 +52,11 @@ open class SitemapFetcherAndParser(
     }
 
 
-    protected open suspend fun parseResponse(responseBody: String, sitemapUrl: String, discoverNextPages: Boolean = true): SitemapParseResult {
+    protected open suspend fun parseResponse(responseBody: String, sitemapUrl: String, discoverNextPages: Boolean = true, visitedNextPagesUrls: MutableSet<String>): SitemapParseResult {
         val result = xmlParser.parse(responseBody, sitemapUrl)
 
         if (result is SitemapParseResult.UrlSet && discoverNextPages) {
-            val nextPagesUrls = getNextPages(sitemapUrl)
+            val nextPagesUrls = getNextPages(sitemapUrl, discoverNextPages, visitedNextPagesUrls)
             if (nextPagesUrls.isNotEmpty()) {
                 return SitemapParseResult.UrlSet(sitemapUrl, (result.urls + nextPagesUrls).toSet().toList())
             }
@@ -61,11 +65,18 @@ open class SitemapFetcherAndParser(
         return result
     }
 
-    protected open suspend fun getNextPages(sitemapUrl: String): Set<SitemapUrl> {
+    protected open suspend fun getNextPages(sitemapUrl: String, discoverNextPages: Boolean, visitedNextPagesUrls: MutableSet<String>): Set<SitemapUrl> {
         val nextPagesUrls = getListOfPossibleNextPagesUrls(sitemapUrl)
 
-        val nextPagesResults = nextPagesUrls.map { url ->
-            fetchAndParse(url, true)
+        val unvisitedNextPagesUrls = nextPagesUrls.filterNot { visitedNextPagesUrls.contains(it) }
+        visitedNextPagesUrls.addAll(unvisitedNextPagesUrls)
+
+        if (unvisitedNextPagesUrls.isEmpty()) {
+            return emptySet()
+        }
+
+        val nextPagesResults = unvisitedNextPagesUrls.map { url ->
+            fetchAndParse(url, discoverNextPages, visitedNextPagesUrls)
         }
 
         return nextPagesResults.filterIsInstance<SitemapParseResult.UrlSet>().flatMap { it.urls }.toSet()
