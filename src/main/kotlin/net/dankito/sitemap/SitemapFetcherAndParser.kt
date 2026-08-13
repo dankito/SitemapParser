@@ -1,5 +1,8 @@
 package net.dankito.sitemap
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import net.codinux.log.logger
 import net.dankito.sitemap.model.SitemapParseResult
 import net.dankito.sitemap.model.SitemapUrl
@@ -74,9 +77,10 @@ open class SitemapFetcherAndParser(
         if (unvisitedNextPagesUrls.isEmpty()) {
             return emptySet()
         }
-
-        val nextPagesResults = unvisitedNextPagesUrls.map { url ->
-            fetchAndParse(url, discoverNextPages, visitedNextPagesUrls)
+        val nextPagesResults = coroutineScope {
+            unvisitedNextPagesUrls.map { url ->
+                async { fetchAndParse(url, discoverNextPages, visitedNextPagesUrls) }
+            }.awaitAll()
         }
 
         return nextPagesResults.filterIsInstance<SitemapParseResult.UrlSet>().flatMap { it.urls }.toSet()
