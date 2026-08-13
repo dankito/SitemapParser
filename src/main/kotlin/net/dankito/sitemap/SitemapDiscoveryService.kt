@@ -103,7 +103,7 @@ open class SitemapDiscoveryService(
     }
 
 
-    open suspend fun fetchAndParse(sitemapUrl: String, discoverAdditionalPages: Boolean = true): SitemapParseResult =
-        sitemapParser.fetchAndParse(sitemapUrl, discoverAdditionalPages)
+    open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true): SitemapParseResult =
+        sitemapParser.fetchAndParse(sitemapUrl, discoverNextPages)
 
 }
