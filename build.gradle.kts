@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-
 plugins {
     kotlin("jvm") version "2.0.21"
 }
@@ -18,7 +16,6 @@ ext["projectDescription"] = "Discovers and parses sitemap (index) files."
 kotlin {
     jvmToolchain(11)
 
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     compilerOptions {
         javaParameters = true
 
