@@ -22,6 +22,11 @@ open class SitemapFetcherAndParser(
         val PageQueryParam = Regex("""\?page=(\d+)$""")
         val PageInFilename = Regex("""(\d+)\.xml(\.gz)?$""")
 
+        /**
+         * Safety limit to prevent infinite discovery loops.
+         * While the visited set prevents circular loops, a safety depth is still needed
+         * for servers that perpetually return a "next" page with a unique URL.
+         */
         const val DefaultMaxDiscoveryDepth = 100
     }
 
