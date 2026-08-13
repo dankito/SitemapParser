@@ -88,12 +88,15 @@ open class SitemapFetcherAndParser(
         return nextPagesResults.filterIsInstance<SitemapParseResult.UrlSet>().flatMap { it.urls }.toSet()
     }
 
-    protected open fun isXml(contentType: String?, responseBody: String): Boolean =
-        contentType == "text/xml"
-                || contentType == "application/xml"
-                || responseBody.startsWith("<?xml ")
-                || responseBody.startsWith("<sitemapindex ")
-                || responseBody.startsWith("<urlset ")
+    protected open fun isXml(contentType: String?, responseBody: String): Boolean = when (contentType?.lowercase()) {
+        "text/xml", "application/xml" -> true
+        else -> {
+            val bodyTrimmed = responseBody.trimStart().take("<sitemapindex".length).lowercase()
+            bodyTrimmed.startsWith("<?xml")
+                || bodyTrimmed.startsWith("<sitemapindex")
+                || bodyTrimmed.startsWith("<urlset")
+        }
+    }
 
     protected open fun isGzip(response: WebClientResult<InputStream>): Boolean {
         // TODO: a more robust check would be reading the first few bytes of the response body and checking for gzip magic number:
