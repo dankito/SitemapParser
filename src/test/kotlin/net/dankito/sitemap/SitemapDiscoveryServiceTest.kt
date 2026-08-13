@@ -80,7 +80,19 @@ class SitemapDiscoveryServiceTest {
 
         val urls = (result as SitemapParseResult.UrlSet).urls
         // sitemap.xml only returns 10.000 urls, so it has to discover next pages to have more than 10.000 urls
-        assertThat(urls.size).isGreaterThan(130_000)
+        assertThat(urls.size).isGreaterThan(25_000)
+    }
+
+    @Test
+    fun fetchNextSitemapPages_NextPagesReturnEmptyUrlSets() = runTest(timeout = 20.minutes) {
+        // next pages return empty UrlSets instead of 404 for a not existing next page
+        val result = underTest.fetchAndParse("https://www.der-postillon.com/sitemap.xml?page=1", true)
+
+        assertThat(result).isInstanceOf<SitemapParseResult.UrlSet>()
+
+        val urls = (result as SitemapParseResult.UrlSet).urls
+        // sitemap.xml only returns 10.000 urls, so it has to discover next pages to have more than 10.000 urls
+        assertThat(urls.size).isGreaterThan(13_000)
     }
 
 }

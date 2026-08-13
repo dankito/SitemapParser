@@ -21,6 +21,8 @@ open class SitemapFetcherAndParser(
     companion object {
         val PageQueryParam = Regex("""\?page=(\d+)$""")
         val PageInFilename = Regex("""(\d+)\.xml(\.gz)?$""")
+
+        const val DefaultMaxDiscoveryDepth = 100
     }
 
 
@@ -28,9 +30,9 @@ open class SitemapFetcherAndParser(
 
 
     open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true) =
-        fetchAndParse(sitemapUrl, discoverNextPages, ConcurrentSkipListSet())
+        fetchAndParse(sitemapUrl, discoverNextPages, ConcurrentSkipListSet(), DefaultMaxDiscoveryDepth)
 
-    protected open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true, visitedNextPagesUrls: MutableSet<String>): SitemapParseResult {
+    protected open suspend fun fetchAndParse(sitemapUrl: String, discoverNextPages: Boolean = true, visitedNextPagesUrls: MutableSet<String>, remainingDepth: Int): SitemapParseResult {
         log.info { "Fetching sitemap: $sitemapUrl" }
 
         // TODO: does not work with KtorWebClient as it does not support InputStream, there we would need to use ByteReadChannel
@@ -43,7 +45,7 @@ open class SitemapFetcherAndParser(
             val responseBody = inputStream.bufferedReader().readText()
 
             if (isXml(contentType, responseBody) || inputStream is GZIPInputStream) {
-                parseResponse(responseBody, sitemapUrl, discoverNextPages, visitedNextPagesUrls)
+                parseResponse(responseBody, sitemapUrl, discoverNextPages, visitedNextPagesUrls, remainingDepth)
             } else {
                 log.warn { "Expected to retrieve 'text/xml' as content type for sitemap but got $contentType" }
                 SitemapParseResult.Failure(sitemapUrl, "Unsupported content type: $contentType. Response body: $responseBody")
@@ -55,11 +57,12 @@ open class SitemapFetcherAndParser(
     }
 
 
-    protected open suspend fun parseResponse(responseBody: String, sitemapUrl: String, discoverNextPages: Boolean = true, visitedNextPagesUrls: MutableSet<String>): SitemapParseResult {
+    protected open suspend fun parseResponse(responseBody: String, sitemapUrl: String, discoverNextPages: Boolean = true, visitedNextPagesUrls: MutableSet<String>, remainingDepth: Int): SitemapParseResult {
         val result = xmlParser.parse(responseBody, sitemapUrl)
 
-        if (result is SitemapParseResult.UrlSet && discoverNextPages) {
-            val nextPagesUrls = getNextPages(sitemapUrl, discoverNextPages, visitedNextPagesUrls)
+        if (result is SitemapParseResult.UrlSet && discoverNextPages && remainingDepth > 0) {
+            // for sites returning empty UrlSets instead of 404 for a not existing next page a max discovery depth by remainingDepth has been added
+            val nextPagesUrls = getNextPages(sitemapUrl, discoverNextPages, visitedNextPagesUrls, remainingDepth)
             if (nextPagesUrls.isNotEmpty()) {
                 return SitemapParseResult.UrlSet(sitemapUrl, (result.urls + nextPagesUrls).toSet().toList())
             }
@@ -68,7 +71,7 @@ open class SitemapFetcherAndParser(
         return result
     }
 
-    protected open suspend fun getNextPages(sitemapUrl: String, discoverNextPages: Boolean, visitedNextPagesUrls: MutableSet<String>): Set<SitemapUrl> {
+    protected open suspend fun getNextPages(sitemapUrl: String, discoverNextPages: Boolean, visitedNextPagesUrls: MutableSet<String>, remainingDepth: Int): Set<SitemapUrl> {
         val nextPagesUrls = getListOfPossibleNextPagesUrls(sitemapUrl)
 
         val unvisitedNextPagesUrls = nextPagesUrls.filterNot { visitedNextPagesUrls.contains(it) }
@@ -77,9 +80,10 @@ open class SitemapFetcherAndParser(
         if (unvisitedNextPagesUrls.isEmpty()) {
             return emptySet()
         }
+
         val nextPagesResults = coroutineScope {
             unvisitedNextPagesUrls.map { url ->
-                async { fetchAndParse(url, discoverNextPages, visitedNextPagesUrls) }
+                async { fetchAndParse(url, discoverNextPages, visitedNextPagesUrls, remainingDepth - 1) }
             }.awaitAll()
         }
 
