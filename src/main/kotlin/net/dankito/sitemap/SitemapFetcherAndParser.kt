@@ -62,8 +62,17 @@ open class SitemapFetcherAndParser(
     }
 
     protected open suspend fun getNextPages(sitemapUrl: String): Set<SitemapUrl> {
+        val nextPagesUrls = getListOfPossibleNextPagesUrls(sitemapUrl)
+
+        val nextPagesResults = nextPagesUrls.map { url ->
+            fetchAndParse(url, true)
+        }
+
+        return nextPagesResults.filterIsInstance<SitemapParseResult.UrlSet>().flatMap { it.urls }.toSet()
+    }
+
+    protected open suspend fun getListOfPossibleNextPagesUrls(sitemapUrl: String): List<String> {
         val filename = sitemapUrl.substringAfterLast('/')
-        val urlWithoutFilename = sitemapUrl.substringBeforeLast('/')
 
         val nextPageFilenames = if (PageQueryParam.containsMatchIn(filename)) {
             val match = PageQueryParam.find(filename)!!
@@ -81,11 +90,8 @@ open class SitemapFetcherAndParser(
             emptyList()
         }
 
-        val nextPagesResults = nextPageFilenames.map {
-            fetchAndParse(urlWithoutFilename + "/" + it, true)
-        }
-
-        return nextPagesResults.filterIsInstance<SitemapParseResult.UrlSet>().flatMap { it.urls }.toSet()
+        val urlWithoutFilename = sitemapUrl.substringBeforeLast('/')
+        return nextPageFilenames.toSet().map { urlWithoutFilename + "/" + it }
     }
 
     protected open fun isXml(contentType: String?, responseBody: String): Boolean = when (contentType?.lowercase()) {
